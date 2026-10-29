@@ -6857,7 +6857,7 @@ def make_handler(svc: Service):
                 self.wfile.write(body)
                 return
             if path == "/metrics/prometheus":
-                if self._authorized():
+                if self._authorized_telemetry():
                     body = svc.prometheus().encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
@@ -6868,7 +6868,7 @@ def make_handler(svc: Service):
             if path == "/metrics":
                 from serve import prometheus
                 if prometheus.wants_prometheus(self.headers.get("Accept", ""), urlsplit(self.path).query):
-                    if self._authorized():   # a scraper: the text format, vLLM's names (serve/prometheus.py)
+                    if self._authorized_telemetry():   # a scraper: the text format, vLLM's names (serve/prometheus.py)
                         body = prometheus.render(svc.metrics(), svc.latencies.snapshot()).encode()
                         self.send_response(200)
                         self.send_header("Content-Type", prometheus.CONTENT_TYPE)
@@ -6876,7 +6876,7 @@ def make_handler(svc: Service):
                         self.end_headers()
                         self.wfile.write(body)
                     return
-                if self._authorized():
+                if self._authorized_telemetry():
                     # the last 12 requests; `?requests=all` every one kept (the Monitor's "Show all", issue #35)
                     self._json(200, svc.metrics(all_requests="requests=all" in self.path))
                 return
